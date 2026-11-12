@@ -1,523 +1,99 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#147a50">
-  <title>متجر الحي | La Boutique du Quartier</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --green:#147a50; --dark:#105d3e; --yellow:#f4c542;
-      --bg:#f5f7f5; --text:#202820; --muted:#718078;
-      --white:#fff; --border:#e4eae5; --red:#c83c3c;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,Tahoma,sans-serif}
-    button,input,select,textarea{font:inherit}
-    button{cursor:pointer}
-    .top{background:var(--green);color:white;padding:12px 5%;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .brand{display:flex;align-items:center;gap:10px;font-size:21px;font-weight:bold}
-    .brand-mark{background:var(--yellow);color:var(--dark);width:42px;height:42px;border-radius:12px;display:grid;place-items:center;font-size:23px}
-    .top select{padding:8px;border:0;border-radius:8px}
-    .hero{background:linear-gradient(120deg,#105d3e,#209866);color:white;padding:38px 6%;text-align:center}
-    .hero h1{font-size:clamp(25px,5vw,38px);margin:0 0 12px}
-    .hero p{margin:0;line-height:1.8;color:#e8fff0}
-    .wrap{max-width:1150px;margin:auto;padding:22px 15px}
-    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
-    .toolbar input{flex:1;min-width:190px}
-    input,select,textarea{padding:11px;border:1px solid var(--border);border-radius:9px;background:white;width:100%;color:var(--text)}
-    .toolbar select{width:auto;min-width:130px}
-    .categories{display:flex;gap:8px;overflow:auto;padding:4px 0 15px}
-    .cat{white-space:nowrap;border:1px solid var(--border);background:white;border-radius:22px;padding:9px 16px}
-    .cat.active{background:var(--green);color:white;border-color:var(--green)}
-    .section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:15px 0}
-    .section-title h2{font-size:21px;margin:0}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:15px}
-    .product{background:white;border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
-    .photo{height:155px;background:#edf3ee;display:grid;place-items:center;color:#91a398;font-size:42px;overflow:hidden}
-    .photo img{width:100%;height:100%;object-fit:cover}
-    .product-body{padding:13px;display:flex;flex-direction:column;gap:8px;flex:1}
-    .product h3{font-size:16px;margin:0}
-    .desc{font-size:13px;color:var(--muted);line-height:1.5;min-height:20px}
-    .prices{background:#f6f9f6;border-radius:9px;padding:9px;font-size:13px;line-height:1.9}
-    .prices b{color:var(--green)}
-    .muted{color:var(--muted);font-size:12px}
-    .btn{border:0;border-radius:9px;padding:10px 14px;background:var(--green);color:white;font-weight:bold}
-    .btn:hover{background:var(--dark)}
-    .btn.yellow{background:var(--yellow);color:#26351e}
-    .btn.light{background:#edf3ee;color:var(--dark)}
-    .btn.red{background:var(--red)}
-    .btn.small{padding:7px 10px;font-size:13px}
-    .empty{text-align:center;padding:40px;color:var(--muted);grid-column:1/-1}
-    .cartbar{position:fixed;bottom:15px;left:15px;right:15px;max-width:500px;margin:auto;background:#123e2c;color:white;border-radius:14px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 5px 25px #0003;z-index:5}
-    .cartbar[hidden]{display:none}
-    .admin-link{background:transparent;border:1px solid #ffffff80;color:white;border-radius:8px;padding:8px 12px}
-    .panel{background:white;border:1px solid var(--border);border-radius:14px;padding:17px;margin:18px 0}
-    .panel h2,.panel h3{margin-top:0}
-    .formgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-    .field{display:flex;flex-direction:column;gap:5px;font-size:13px}
-    .field.full{grid-column:1/-1}
-    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-    .admin-product{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
-    .admin-product:last-child{border:0}
-    .hidden{display:none!important}
-    .notice{padding:11px;border-radius:9px;background:#fff8dc;color:#715b10;margin:10px 0;font-size:13px;line-height:1.6}
-    footer{text-align:center;padding:30px 15px;color:var(--muted);font-size:13px}
-    .overlay{position:fixed;inset:0;background:#0008;z-index:10;display:grid;place-items:center;padding:15px}
-    .modal{background:white;border-radius:15px;padding:20px;width:min(430px,100%);max-height:90vh;overflow:auto}
-    .modal h3{margin-top:0}
-    @media(max-width:500px){.top{padding:10px 13px}.brand{font-size:18px}.hero{padding:30px 15px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.photo{height:125px}.product-body{padding:10px}.product h3{font-size:14px}.prices{font-size:12px}.btn{padding:9px}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#087a56">
+<title>متجر الحي | La Boutique du Quartier</title>
+<link rel="preconnect" href="https://ajksuhuvclfshpqaquju.supabase.co">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--g:#087a56;--g2:#0b9b70;--ink:#17231d;--muted:#68766e;--bg:#f5f8f5;--line:#e4ebe5;--white:#fff;--shadow:0 10px 30px #173b2510}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Tahoma,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}.wrap{max-width:1160px;margin:auto;padding:0 18px}.topbar{background:#075c43;color:#fff;font-size:13px;padding:8px 0}.topbar .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}.headrow{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0}.brand{display:flex;align-items:center;gap:11px}.brandmark{width:50px;height:50px;border-radius:15px;background:linear-gradient(145deg,var(--g),var(--g2));color:#fff;display:grid;place-items:center;font-size:26px}.brand h1{font-size:20px;margin:0;color:var(--g)}.brand small{display:block;color:var(--muted);margin-top:3px;font-size:12px}.head-actions{display:flex;align-items:center;gap:8px}.lang,.btn{border:1px solid var(--line);background:white;border-radius:11px;padding:10px 12px;color:var(--ink)}.primary{background:var(--g);color:#fff;border-color:var(--g)}.hero{margin:22px 0;background:linear-gradient(115deg,#075d43,#0b9b70);border-radius:22px;color:white;padding:28px;display:grid;grid-template-columns:1.4fr .8fr;gap:20px;align-items:center}.hero h2{font-size:clamp(24px,4vw,38px);margin:0 0 10px}.hero p{line-height:1.8;margin:0;color:#e8fff4}.hero-art{font-size:75px;text-align:center}.searchrow{display:flex;gap:10px;margin:18px 0}.searchrow input{flex:1;min-width:0;border:1px solid var(--line);border-radius:13px;padding:14px;background:#fff}.muted{color:var(--muted);font-size:13px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:24px 0 13px}.section-title h3{margin:0;font-size:19px}.categories{display:flex;gap:9px;overflow:auto;padding:2px 0 8px}.cat{white-space:nowrap;padding:10px 15px;border:1px solid var(--line);border-radius:999px;background:white;color:#35443b}.cat.active{background:#e5f5ed;border-color:#a9ddc2;color:var(--g);font-weight:bold}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.product{background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}.prod-img{height:155px;background:#edf5ed;display:grid;place-items:center;overflow:hidden;font-size:52px}.prod-img img{width:100%;height:100%;object-fit:cover}.prod-body{padding:13px;display:flex;flex-direction:column;gap:8px;flex:1}.prod-body h4{margin:0;font-size:15px}.prices{display:grid;gap:4px;font-size:12px;color:var(--muted)}.prices b{color:var(--g);font-size:13px}.add{margin-top:auto;background:var(--g);color:#fff;border-radius:10px;padding:10px;font-weight:bold}.empty{background:#fff;border:1px dashed #ccd9cf;border-radius:17px;padding:35px 15px;text-align:center;color:var(--muted);grid-column:1/-1}.footer{margin-top:38px;background:#123d2d;color:#e9f6ee;padding:25px 0}.footrow{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}.wa{display:inline-flex;align-items:center;gap:8px;background:#20b96b;color:#fff;border-radius:11px;padding:12px 16px;text-decoration:none;font-weight:bold}.drawer-bg{position:fixed;inset:0;background:#0006;z-index:10;display:none}.drawer{position:absolute;inset-block:0;inset-inline-end:0;width:min(430px,100%);background:#fff;padding:20px;overflow:auto}.drawer-head{display:flex;justify-content:space-between;align-items:center}.close{background:#edf2ed;border-radius:9px;padding:8px 12px}.cartline{display:grid;grid-template-columns:1fr auto;gap:8px;padding:14px 0;border-bottom:1px solid var(--line)}.qty{display:flex;align-items:center;gap:8px}.qty button{width:28px;height:28px;border-radius:8px;background:#edf5ef}.total{display:flex;justify-content:space-between;font-weight:bold;font-size:18px;padding:18px 0}.checkout{width:100%;background:#20b96b;color:#fff;border-radius:11px;padding:14px;font-weight:bold}.small{font-size:11px;color:var(--muted);line-height:1.7}.panel{display:none;background:#fff;border:1px solid var(--line);padding:18px;border-radius:17px;margin:18px 0}.panel input,.panel select,.panel textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;margin:5px 0 11px;background:#fff}.panel label{font-size:13px;font-weight:bold}.admin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.panel button{padding:10px 14px;border-radius:9px}.danger{background:#fff0f0;color:#a32626}.status{padding:10px 12px;border-radius:10px;background:#eef7f1;color:#17613e;margin:12px 0;font-size:13px}.status.err{background:#fff0f0;color:#a32626}.adminbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.admin-product{display:flex;justify-content:space-between;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:10px 0}.admin-product button{margin-inline-start:5px}.hidden{display:none!important}
+@media(max-width:850px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}.hero{grid-template-columns:1fr}.hero-art{display:none}}
+@media(max-width:600px){.wrap{padding:0 13px}.brandmark{width:43px;height:43px}.brand h1{font-size:17px}.brand small{font-size:10px}.headrow{padding:9px 0}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.prod-img{height:120px}.prod-body{padding:10px}.prod-body h4{font-size:13px}.hero{padding:22px;margin-top:14px}.admin-grid{grid-template-columns:1fr}.lang,.btn{padding:9px}.section-title h3{font-size:17px}}
+</style>
 </head>
 <body>
-
-<header class="top">
-  <div class="brand">
-    <div class="brand-mark">🛒</div>
-    <span id="brandName">متجر الحي</span>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <select id="language" aria-label="Language">
-      <option value="ar">العربية</option>
-      <option value="fr">Français</option>
-      <option value="en">English</option>
-    </select>
-    <button class="admin-link" id="adminOpen">إدارة المتجر</button>
-  </div>
-</header>
-
-<section class="hero">
-  <h1 id="heroTitle">مرحبًا بكم في متجر الحي</h1>
-  <p id="heroText">كل ما تحتاجونه من مواد غذائية وهواتف ومستلزماتها، في مكان واحد.</p>
-</section>
-
+<div class="topbar"><div class="wrap"><span id="topline">تسوق بسهولة… واطلب مباشرة عبر واتساب</span><span>📍 موريتانيا</span></div></div>
+<header class="header"><div class="wrap headrow">
+ <div class="brand"><div class="brandmark">🛍️</div><div><h1>متجر الحي</h1><small>La Boutique du Quartier</small></div></div>
+ <div class="head-actions"><select class="lang" id="lang" aria-label="Language"><option value="ar">العربية</option><option value="fr">Français</option><option value="en">English</option></select><button class="btn primary" id="openCart">🛒 <span id="cartLabel">السلة</span> <span id="cartCount">0</span></button><button class="btn" id="adminToggle">إدارة المتجر</button></div>
+</div></header>
 <main class="wrap">
-  <div class="toolbar">
-    <input id="search" placeholder="ابحث عن منتج...">
-    <select id="sort">
-      <option value="default">الترتيب الافتراضي</option>
-      <option value="low">السعر: الأقل أولًا</option>
-      <option value="high">السعر: الأعلى أولًا</option>
-    </select>
+<section class="hero"><div><h2 id="heroTitle">كل احتياجاتك في مكان واحد</h2><p id="heroText">مواد غذائية، هواتف وإكسسوارات. تصفّح المنتجات واختر الكمية المناسبة، ثم أرسل طلبك مباشرة إلى متجر الحي عبر واتساب.</p></div><div class="hero-art">🛒 📱 🥫</div></section>
+<div class="searchrow"><input id="search" placeholder="ابحث عن منتج…" autocomplete="off"><span class="muted" style="align-self:center" id="productCount"></span></div>
+<div class="section-title"><h3 id="categoriesTitle">تصفح الأقسام</h3><span class="muted" id="priceHint">الأسعار بالأوقية الجديدة (MRU)</span></div>
+<nav class="categories" id="categories"></nav>
+<div class="section-title"><h3 id="productsTitle">المنتجات</h3><span class="muted" id="connectionState">جارٍ الاتصال بالمتجر…</span></div>
+<div class="grid" id="products"><div class="empty">جارٍ تحميل المنتجات…</div></div>
+<div class="status" id="storeStatus">يتم تحميل المنتجات من قاعدة بيانات المتجر.</div>
+<section class="panel" id="adminPanel">
+ <div class="adminbar"><h3 id="adminTitle" style="margin:0">لوحة إدارة متجر الحي</h3><span style="flex:1"></span><button class="btn" id="logoutBtn" style="display:none">تسجيل الخروج</button></div>
+ <div id="loginArea">
+  <p class="small">سجّل الدخول بحساب الإدارة الذي أُنشئ في Supabase Auth وأُضيف إلى جدول مديري المتجر.</p>
+  <label>البريد الإلكتروني<input id="adminEmail" type="email" autocomplete="username" placeholder="admin@example.com"></label>
+  <label>كلمة المرور<input id="adminPassword" type="password" autocomplete="current-password"></label>
+  <button class="btn primary" id="loginBtn">تسجيل الدخول</button>
+ </div>
+ <div id="adminArea" class="hidden">
+  <div class="status">تم تسجيل الدخول. يمكنك إضافة المنتجات وإدارة المنتجات الموجودة.</div>
+  <h4>إضافة منتج أو تحديث بياناته</h4>
+  <input id="editId" type="hidden">
+  <div class="admin-grid">
+   <label>اسم المنتج بالعربية<input id="pNameAr" required placeholder="مثال: أرز بسمتي"></label>
+   <label>Nom du produit (français)<input id="pNameFr" placeholder="Nom en français"></label>
+   <label>Product name (English)<input id="pNameEn" placeholder="Product name"></label>
+   <label>القسم<select id="pCat"><option value="food">مواد غذائية</option><option value="phones">هواتف</option><option value="accessories">إكسسوارات الهواتف</option><option value="other">أخرى</option></select></label>
+   <label>سعر الفرد (MRU)<input id="pUnit" type="number" min="0" step="1"></label>
+   <label>سعر التجزئة (MRU)<input id="pRetail" type="number" min="0" step="1"></label>
+   <label>سعر الجملة (MRU)<input id="pWholesale" type="number" min="0" step="1"></label>
+   <label>أقل كمية للجملة<input id="pMin" type="number" min="1" value="12"></label>
+   <label style="grid-column:1/-1">صورة المنتج<input id="pImage" type="file" accept="image/*"></label>
   </div>
-
-  <div class="categories" id="categories"></div>
-
-  <div class="section-title">
-    <h2 id="productsTitle">منتجاتنا</h2>
-    <span class="muted" id="productCount"></span>
-  </div>
-  <div class="grid" id="products">
-    <div class="empty">جارٍ تحميل المنتجات...</div>
-  </div>
-
-  <section id="adminPanel" class="hidden">
-    <div class="panel">
-      <div class="section-title">
-        <h2>لوحة إدارة متجر الحي</h2>
-        <button class="btn light small" id="logout">تسجيل الخروج</button>
-      </div>
-      <p class="muted">إدارة المنتجات والأقسام والأسعار والمخزون.</p>
-
-      <h3 id="formTitle">إضافة منتج جديد</h3>
-      <form id="productForm">
-        <input type="hidden" id="editId">
-        <div class="formgrid">
-          <label class="field">اسم المنتج بالعربية<input id="name_ar" required></label>
-          <label class="field">Nom en français<input id="name_fr"></label>
-          <label class="field">Product name in English<input id="name_en"></label>
-
-          <label class="field">وصف بالعربية<textarea id="description_ar" rows="2"></textarea></label>
-          <label class="field">Description française<textarea id="description_fr" rows="2"></textarea></label>
-          <label class="field">English description<textarea id="description_en" rows="2"></textarea></label>
-
-          <label class="field">القسم<select id="category_id"></select></label>
-          <label class="field">سعر الفرد<input id="price_individual" type="number" min="0" step="any" required></label>
-          <label class="field">سعر التجزئة<input id="price_retail" type="number" min="0" step="any" required></label>
-          <label class="field">سعر الجملة<input id="price_wholesale" type="number" min="0" step="any" required></label>
-          <label class="field">أقل كمية للجملة<input id="wholesale_min_quantity" type="number" min="1" value="1"></label>
-          <label class="field">المخزون<input id="stock" type="number" min="0" value="0"></label>
-          <label class="field full">صورة المنتج<input id="image" type="file" accept="image/jpeg,image/png,image/webp"></label>
-          <label class="field">عرض المنتج
-            <select id="active"><option value="true">ظاهر للعملاء</option><option value="false">مخفي</option></select>
-          </label>
-        </div>
-        <div class="actions">
-          <button class="btn" type="submit" id="saveProduct">حفظ المنتج</button>
-          <button class="btn light" type="button" id="cancelEdit">إلغاء</button>
-        </div>
-        <p class="muted" id="formMessage"></p>
-      </form>
-    </div>
-
-    <div class="panel">
-      <h3>إدارة الأقسام</h3>
-      <div class="formgrid">
-        <label class="field">اسم القسم بالعربية<input id="cat_ar"></label>
-        <label class="field">Nom français<input id="cat_fr"></label>
-        <label class="field">Category name in English<input id="cat_en"></label>
-      </div>
-      <div class="actions"><button class="btn" id="addCategory">إضافة القسم</button></div>
-      <div id="adminCategories"></div>
-    </div>
-
-    <div class="panel">
-      <h3>المنتجات المسجلة</h3>
-      <div id="adminProducts"></div>
-    </div>
-  </section>
+  <button class="btn primary" id="saveProduct">حفظ المنتج في Supabase</button><button class="btn" id="clearForm">تفريغ الحقول</button>
+  <h4>المنتجات المسجلة</h4><div id="adminProducts"></div>
+ </div>
+ <div id="adminMessage" class="small"></div>
+</section>
 </main>
-
-<div class="cartbar" id="cartBar" hidden>
-  <div><span id="cartCount">0</span> <span id="cartLabel">منتجات في السلة</span></div>
-  <button class="btn yellow" id="checkout">إرسال الطلب عبر واتساب</button>
-</div>
-
-<footer>
-  <strong>متجر الحي | La Boutique du Quartier</strong>
-  <p>موريتانيا · Nouakchott</p>
-  <p>للطلب والاستفسار: 33020124</p>
-</footer>
-
-<div id="loginOverlay" class="overlay hidden">
-  <div class="modal">
-    <h3>دخول إدارة المتجر</h3>
-    <p class="muted">سجّل الدخول بحساب المدير.</p>
-    <form id="loginForm">
-      <label class="field">البريد الإلكتروني<input id="email" type="email" required></label>
-      <label class="field" style="margin-top:10px">كلمة المرور<input id="password" type="password" required></label>
-      <div class="actions">
-        <button class="btn" type="submit">دخول</button>
-        <button class="btn light" type="button" id="closeLogin">إلغاء</button>
-      </div>
-      <p id="loginMessage" class="muted"></p>
-    </form>
-  </div>
-</div>
-
+<footer class="footer"><div class="wrap footrow"><div><strong>متجر الحي</strong><p class="small" style="color:#d1e5d8">خدمتكم أقرب… وتسوقكم أسهل.</p></div><div><a class="wa" href="https://wa.me/22233020124" target="_blank" rel="noopener">واتساب · 33020124</a><p class="small" style="color:#d1e5d8">© متجر الحي</p></div></div></footer>
+<div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><h3 id="cartTitle">سلة مشترياتك</h3><button class="close" id="closeCart">✕</button></div><div id="cartItems"></div><div class="total"><span id="totalLabel">المجموع التقديري</span><span id="cartTotal">0 MRU</span></div><p class="small" id="cartDisclaimer">قد تتغير الأسعار أو التوفر بعد تأكيد المتجر للطلب.</p><button class="checkout" id="checkout">إرسال الطلب عبر واتساب</button></aside></div>
 <script>
-const SUPABASE_URL = 'https://ajksuhuvclfshpqaquju.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_aj4u5Tvgz2HK-Uymsh-YUQ_BK1h7ggG';
-const WHATSAPP_NUMBER = '22233020124';
-
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
-
-let lang = 'ar';
-let products = [];
-let categories = [];
-let cart = [];
-let currentCategory = 'all';
-let isAdmin = false;
-let currentUser = null;
-let uploadedImageUrl = '';
-
-const words = {
-  ar:{search:'ابحث عن منتج...',all:'كل المنتجات',products:'منتجاتنا',individual:'الفرد',retail:'التجزئة',wholesale:'الجملة',min:'أقل كمية للجملة',add:'أضف للسلة',empty:'لا توجد منتجات حاليًا',cart:'منتجات في السلة',send:'إرسال الطلب عبر واتساب',hero:'مرحبًا بكم في متجر الحي',intro:'كل ما تحتاجونه من مواد غذائية وهواتف ومستلزماتها، في مكان واحد.',count:'منتج',admin:'إدارة المتجر'},
-  fr:{search:'Rechercher un produit...',all:'Tous les produits',products:'Nos produits',individual:'Détail',retail:'Semi-gros',wholesale:'Gros',min:'Quantité minimum en gros',add:'Ajouter au panier',empty:'Aucun produit disponible',cart:'produits dans le panier',send:'Commander sur WhatsApp',hero:'Bienvenue chez La Boutique du Quartier',intro:'Alimentation, téléphones et accessoires au même endroit.',count:'produits',admin:'Administration'},
-  en:{search:'Search products...',all:'All products',products:'Our products',individual:'Individual',retail:'Retail',wholesale:'Wholesale',min:'Wholesale minimum quantity',add:'Add to cart',empty:'No products available',cart:'items in cart',send:'Order via WhatsApp',hero:'Welcome to La Boutique du Quartier',intro:'Groceries, phones and accessories all in one place.',count:'products',admin:'Store admin'}
+const SUPABASE_URL="https://ajksuhuvclfshpqaquju.supabase.co";
+const SUPABASE_ANON_KEY="sb_publishable_aj4u5Tvgz2HK-Uymsh-YUQ_BK1h7ggG";
+const WA_NUMBER="22233020124", IMAGE_BUCKET="product-images";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let lang="ar",category="all",cart={},products=[],isAdmin=false;
+const $=id=>document.getElementById(id);
+const T={
+ar:{top:"تسوق بسهولة… واطلب مباشرة عبر واتساب",hero:"كل احتياجاتك في مكان واحد",desc:"مواد غذائية، هواتف وإكسسوارات. تصفّح المنتجات واختر الكمية المناسبة، ثم أرسل طلبك مباشرة إلى متجر الحي عبر واتساب.",search:"ابحث عن منتج…",cats:"تصفح الأقسام",hint:"الأسعار بالأوقية الجديدة (MRU)",items:"المنتجات",all:"الكل",food:"مواد غذائية",phones:"هواتف",accessories:"إكسسوارات الهواتف",other:"أخرى",cart:"السلة",add:"أضف إلى السلة",unit:"الفرد",retail:"التجزئة",wholesale:"الجملة",min:"أقل كمية للجملة",cartTitle:"سلة مشترياتك",total:"المجموع التقديري",disclaimer:"السعر والتوفر النهائيان يؤكدهما المتجر.",checkout:"إرسال الطلب عبر واتساب",empty:"لا توجد منتجات متاحة في هذا القسم.",emptyCart:"السلة فارغة حاليًا.",count:"منتج",currency:"أوقية جديدة",sent:"مرحبًا، أريد طلب المنتجات التالية من متجر الحي:",load:"جارٍ تحميل المنتجات…",connected:"متصل بقاعدة البيانات",offline:"تعذر الاتصال بقاعدة البيانات",noPrice:"السعر عند التواصل",login:"سجّل الدخول لإدارة المتجر"},
+fr:{top:"Faites vos achats et commandez directement sur WhatsApp",hero:"Tous vos besoins au même endroit",desc:"Alimentation, téléphones et accessoires. Choisissez vos produits et quantités, puis envoyez votre commande sur WhatsApp.",search:"Rechercher un produit…",cats:"Parcourir les catégories",hint:"Prix en MRU",items:"Produits",all:"Tout",food:"Alimentation",phones:"Téléphones",accessories:"Accessoires",other:"Autres",cart:"Panier",add:"Ajouter au panier",unit:"Unité",retail:"Détail",wholesale:"Gros",min:"Minimum gros",cartTitle:"Votre panier",total:"Total estimé",disclaimer:"Le prix et la disponibilité seront confirmés par le magasin.",checkout:"Envoyer sur WhatsApp",empty:"Aucun produit disponible.",emptyCart:"Votre panier est vide.",count:"produit(s)",currency:"MRU",sent:"Bonjour, je souhaite commander ces produits chez La Boutique du Quartier :",load:"Chargement des produits…",connected:"Connecté à la base de données",offline:"Connexion à la base de données impossible",noPrice:"Prix sur demande",login:"Connectez-vous pour gérer le magasin"},
+en:{top:"Shop easily and order directly on WhatsApp",hero:"Everything you need in one place",desc:"Groceries, phones and accessories. Browse products, choose quantities, then send your order directly to the shop on WhatsApp.",search:"Search products…",cats:"Browse categories",hint:"Prices in MRU",items:"Products",all:"All",food:"Groceries",phones:"Phones",accessories:"Phone accessories",other:"Other",cart:"Cart",add:"Add to cart",unit:"Unit",retail:"Retail",wholesale:"Wholesale",min:"Wholesale min.",cartTitle:"Your cart",total:"Estimated total",disclaimer:"Final price and availability will be confirmed by the store.",checkout:"Send order on WhatsApp",empty:"No products available.",emptyCart:"Your cart is empty.",count:"product(s)",currency:"MRU",sent:"Hello, I would like to order these items from La Boutique du Quartier:",load:"Loading products…",connected:"Connected to database",offline:"Could not connect to database",noPrice:"Price on request",login:"Sign in to manage the store"}
 };
-
-function tr(key){return words[lang][key] || key}
-function safe(value){
-  return String(value ?? '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
-}
-function money(value){
-  return Number(value || 0).toLocaleString(lang === 'en' ? 'en-US' : 'fr-FR') + ' MRU';
-}
-function productName(p){return p['name_'+lang] || p.name_ar || p.name_fr || p.name_en || ''}
-function categoryName(c){return c['name_'+lang] || c.name_ar || c.name_fr || c.name_en || ''}
-function description(p){return p['description_'+lang] || p.description_ar || p.description_fr || p.description_en || ''}
-
-async function loadData(){
-  const [c,p] = await Promise.all([
-    db.from('categories').select('*').order('created_at'),
-    db.from('products').select('*').order('created_at',{ascending:false})
-  ]);
-  if(c.error) console.error(c.error);
-  if(p.error) console.error(p.error);
-  categories = c.data || [];
-  products = p.data || [];
-  renderCategories();
-  renderProducts();
-  if(isAdmin) renderAdmin();
-}
-
-function renderCategories(){
-  const el=document.getElementById('categories');
-  el.innerHTML='';
-  const all=document.createElement('button');
-  all.className='cat'+(currentCategory==='all'?' active':'');
-  all.textContent=tr('all');
-  all.onclick=()=>{currentCategory='all';renderCategories();renderProducts()};
-  el.appendChild(all);
-  categories.forEach(c=>{
-    const b=document.createElement('button');
-    b.className='cat'+(currentCategory===c.id?' active':'');
-    b.textContent=categoryName(c);
-    b.onclick=()=>{currentCategory=c.id;renderCategories();renderProducts()};
-    el.appendChild(b);
-  });
-}
-
-function renderProducts(){
-  const query=document.getElementById('search').value.toLowerCase().trim();
-  let list=products.filter(p=>p.active);
-  if(currentCategory!=='all') list=list.filter(p=>p.category_id===currentCategory);
-  list=list.filter(p=>(productName(p)+' '+description(p)).toLowerCase().includes(query));
-  const sort=document.getElementById('sort').value;
-  if(sort==='low')list.sort((a,b)=>Number(a.price_individual)-Number(b.price_individual));
-  if(sort==='high')list.sort((a,b)=>Number(b.price_individual)-Number(a.price_individual));
-
-  document.getElementById('productCount').textContent=list.length+' '+tr('count');
-  const root=document.getElementById('products');
-  if(!list.length){root.innerHTML='<div class="empty">'+tr('empty')+'</div>';return}
-  root.innerHTML=list.map(p=>`
-    <article class="product">
-      <div class="photo">${p.image_url?`<img src="${safe(p.image_url)}" alt="${safe(productName(p))}">`:'🛍️'}</div>
-      <div class="product-body">
-        <h3>${safe(productName(p))}</h3>
-        <div class="desc">${safe(description(p))}</div>
-        <div class="prices">
-          ${tr('individual')}: <b>${money(p.price_individual)}</b><br>
-          ${tr('retail')}: <b>${money(p.price_retail)}</b><br>
-          ${tr('wholesale')}: <b>${money(p.price_wholesale)}</b><br>
-          <span class="muted">${tr('min')}: ${Number(p.wholesale_min_quantity||1)}</span>
-        </div>
-        <div class="muted">${lang==='ar'?'المتوفر':'Stock'}: ${Number(p.stock||0)}</div>
-        <button class="btn add-cart" data-id="${p.id}">${tr('add')}</button>
-      </div>
-    </article>`).join('');
-  root.querySelectorAll('.add-cart').forEach(b=>b.onclick=()=>addToCart(b.dataset.id));
-}
-
-function addToCart(id){
-  const p=products.find(x=>x.id===id);
-  if(!p)return;
-  const existing=cart.find(x=>x.id===id);
-  if(existing)existing.quantity++;
-  else cart.push({id,quantity:1});
-  renderCart();
-}
-function renderCart(){
-  const bar=document.getElementById('cartBar');
-  const count=cart.reduce((n,x)=>n+x.quantity,0);
-  bar.hidden=count===0;
-  document.getElementById('cartCount').textContent=count;
-  document.getElementById('cartLabel').textContent=tr('cart');
-  document.getElementById('checkout').textContent=tr('send');
-}
-
-function checkout(){
-  if(!cart.length)return;
-  let lines=[`طلب جديد من متجر الحي`,`--------------------`];
-  let total=0;
-  cart.forEach(item=>{
-    const p=products.find(x=>x.id===item.id);
-    if(!p)return;
-    const price=Number(p.price_individual||0);
-    total+=price*item.quantity;
-    lines.push(`${productName(p)} × ${item.quantity} = ${money(price*item.quantity)}`);
-  });
-  lines.push('--------------------');
-  lines.push(`المجموع التقريبي: ${money(total)}`);
-  lines.push('يرجى تأكيد الأسعار والتوفر.');
-  window.open('https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(lines.join('\n')),'_blank');
-}
-
-function applyLanguage(){
-  document.documentElement.lang=lang;
-  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
-  document.getElementById('brandName').textContent=lang==='ar'?'متجر الحي':'La Boutique du Quartier';
-  document.getElementById('heroTitle').textContent=tr('hero');
-  document.getElementById('heroText').textContent=tr('intro');
-  document.getElementById('search').placeholder=tr('search');
-  document.getElementById('productsTitle').textContent=tr('products');
-  document.getElementById('adminOpen').textContent=tr('admin');
-  renderCategories();renderProducts();renderCart();
-}
-
-document.getElementById('language').onchange=e=>{lang=e.target.value;applyLanguage()};
-document.getElementById('search').oninput=renderProducts;
-document.getElementById('sort').onchange=renderProducts;
-document.getElementById('checkout').onclick=checkout;
-
-function showLogin(){document.getElementById('loginOverlay').classList.remove('hidden')}
-function hideLogin(){document.getElementById('loginOverlay').classList.add('hidden')}
-document.getElementById('adminOpen').onclick=()=>isAdmin?document.getElementById('adminPanel').classList.toggle('hidden'):showLogin();
-document.getElementById('closeLogin').onclick=hideLogin;
-
-async function verifyAdmin(){
-  const {data:{user}}=await db.auth.getUser();
-  currentUser=user;
-  isAdmin=false;
-  if(!user)return false;
-  const {data,error}=await db.from('profiles').select('role').eq('id',user.id).maybeSingle();
-  if(error){console.error(error);return false}
-  isAdmin=data?.role==='admin';
-  return isAdmin;
-}
-
-document.getElementById('loginForm').onsubmit=async e=>{
-  e.preventDefault();
-  const msg=document.getElementById('loginMessage');
-  msg.textContent='جارٍ التحقق...';
-  const email=document.getElementById('email').value;
-  const password=document.getElementById('password').value;
-  const {error}=await db.auth.signInWithPassword({email,password});
-  if(error){msg.textContent='تعذر تسجيل الدخول: '+error.message;return}
-  const allowed=await verifyAdmin();
-  if(!allowed){
-    await db.auth.signOut();
-    msg.textContent='هذا الحساب ليس لديه صلاحية إدارة المتجر.';
-    return;
-  }
-  hideLogin();
-  document.getElementById('adminPanel').classList.remove('hidden');
-  await loadData();
-  renderAdmin();
-};
-
-document.getElementById('logout').onclick=async()=>{
-  await db.auth.signOut();
-  isAdmin=false;currentUser=null;
-  document.getElementById('adminPanel').classList.add('hidden');
-};
-
-function renderAdmin(){
-  if(!isAdmin)return;
-  const select=document.getElementById('category_id');
-  select.innerHTML='<option value="">بدون قسم</option>'+categories.map(c=>`<option value="${c.id}">${safe(categoryName(c))}</option>`).join('');
-  document.getElementById('adminProducts').innerHTML=products.map(p=>`
-    <div class="admin-product">
-      <div><strong>${safe(productName(p))}</strong><div class="muted">${money(p.price_individual)} · ${p.active?'ظاهر':'مخفي'}</div></div>
-      <div class="actions">
-        <button class="btn light small edit-product" data-id="${p.id}">تعديل</button>
-        <button class="btn red small delete-product" data-id="${p.id}">حذف</button>
-      </div>
-    </div>`).join('')||'<p class="muted">لا توجد منتجات بعد.</p>';
-
-  document.querySelectorAll('.edit-product').forEach(b=>b.onclick=()=>editProduct(b.dataset.id));
-  document.querySelectorAll('.delete-product').forEach(b=>b.onclick=()=>deleteProduct(b.dataset.id));
-
-  document.getElementById('adminCategories').innerHTML=categories.map(c=>`
-    <div class="admin-product">
-      <span>${safe(categoryName(c))}</span>
-      <button class="btn red small delete-category" data-id="${c.id}">حذف</button>
-    </div>`).join('');
-  document.querySelectorAll('.delete-category').forEach(b=>b.onclick=()=>deleteCategory(b.dataset.id));
-}
-
-function resetForm(){
-  document.getElementById('productForm').reset();
-  document.getElementById('editId').value='';
-  document.getElementById('formTitle').textContent='إضافة منتج جديد';
-  document.getElementById('saveProduct').textContent='حفظ المنتج';
-  uploadedImageUrl='';
-}
-document.getElementById('cancelEdit').onclick=resetForm;
-
-function editProduct(id){
-  const p=products.find(x=>x.id===id);
-  if(!p)return;
-  ['name_ar','name_fr','name_en','description_ar','description_fr','description_en','price_individual','price_retail','price_wholesale','wholesale_min_quantity','stock','active'].forEach(k=>{
-    document.getElementById(k).value=p[k]??'';
-  });
-  document.getElementById('category_id').value=p.category_id||'';
-  document.getElementById('editId').value=p.id;
-  uploadedImageUrl=p.image_url||'';
-  document.getElementById('formTitle').textContent='تعديل المنتج';
-  document.getElementById('saveProduct').textContent='حفظ التعديلات';
-  document.getElementById('productForm').scrollIntoView({behavior:'smooth'});
-}
-
-async function uploadImage(file){
-  if(!file)return uploadedImageUrl;
-  if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('نوع الصورة غير مدعوم');
-  if(file.size>5*1024*1024)throw new Error('حجم الصورة أكبر من 5 ميغابايت');
-  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg';
-  const path=Date.now()+'-'+Math.random().toString(36).slice(2)+'.'+ext;
-  const {error}=await db.storage.from('products').upload(path,file,{contentType:file.type});
-  if(error)throw error;
-  const {data}=db.storage.from('products').getPublicUrl(path);
-  return data.publicUrl;
-}
-
-document.getElementById('productForm').onsubmit=async e=>{
-  e.preventDefault();
-  if(!isAdmin)return;
-  const msg=document.getElementById('formMessage');
-  const btn=document.getElementById('saveProduct');
-  btn.disabled=true;msg.textContent='جارٍ حفظ المنتج...';
-  try{
-    const file=document.getElementById('image').files[0];
-    const image_url=await uploadImage(file);
-    const data={
-      name_ar:document.getElementById('name_ar').value.trim(),
-      name_fr:document.getElementById('name_fr').value.trim(),
-      name_en:document.getElementById('name_en').value.trim(),
-      description_ar:document.getElementById('description_ar').value.trim(),
-      description_fr:document.getElementById('description_fr').value.trim(),
-      description_en:document.getElementById('description_en').value.trim(),
-      category_id:document.getElementById('category_id').value||null,
-      price_individual:Number(document.getElementById('price_individual').value),
-      price_retail:Number(document.getElementById('price_retail').value),
-      price_wholesale:Number(document.getElementById('price_wholesale').value),
-      wholesale_min_quantity:Number(document.getElementById('wholesale_min_quantity').value||1),
-      stock:Number(document.getElementById('stock').value||0),
-      active:document.getElementById('active').value==='true',
-      image_url:image_url||null
-    };
-    const id=document.getElementById('editId').value;
-    const result=id
-      ? await db.from('products').update(data).eq('id',id)
-      : await db.from('products').insert(data);
-    if(result.error)throw result.error;
-    msg.textContent='تم حفظ المنتج بنجاح.';
-    resetForm();await loadData();renderAdmin();
-  }catch(err){msg.textContent='حدث خطأ: '+err.message}
-  finally{btn.disabled=false}
-};
-
-async function deleteProduct(id){
-  if(!confirm('هل تريد حذف هذا المنتج؟'))return;
-  const {error}=await db.from('products').delete().eq('id',id);
-  if(error){alert(error.message);return}
-  await loadData();renderAdmin();
-}
-
-document.getElementById('addCategory').onclick=async()=>{
-  if(!isAdmin)return;
-  const data={
-    name_ar:document.getElementById('cat_ar').value.trim(),
-    name_fr:document.getElementById('cat_fr').value.trim(),
-    name_en:document.getElementById('cat_en').value.trim()
-  };
-  if(!data.name_ar){alert('اكتب اسم القسم بالعربية على الأقل.');return}
-  const {error}=await db.from('categories').insert(data);
-  if(error){alert(error.message);return}
-  document.getElementById('cat_ar').value='';
-  document.getElementById('cat_fr').value='';
-  document.getElementById('cat_en').value='';
-  await loadData();renderAdmin();
-};
-
-async function deleteCategory(id){
-  if(!confirm('حذف القسم؟ يجب نقل منتجاته أو حذفها أولًا إذا كانت مرتبطة به.'))return;
-  const {error}=await db.from('categories').delete().eq('id',id);
-  if(error){alert('تعذر الحذف: '+error.message);return}
-  await loadData();renderAdmin();
-}
-
-db.auth.onAuthStateChange(async()=>{
-  // لا نفتح لوحة الإدارة تلقائيًا؛ يلزم التحقق عند طلبها.
-});
-
-applyLanguage();
-loadData();
+const tr=()=>T[lang], nameOf=p=>lang==="fr"?(p.name_fr||p.name_ar):lang==="en"?(p.name_en||p.name_ar):p.name_ar;
+function money(v){return v?Number(v).toLocaleString(lang==="ar"?"ar-MR":"fr-FR")+" "+tr().currency:tr().noPrice}
+function setStatus(msg,err=false){$("storeStatus").textContent=msg;$("storeStatus").className="status"+(err?" err":"")}
+function setLang(v){lang=v;document.documentElement.lang=v;document.documentElement.dir=v==="ar"?"rtl":"ltr";$("topline").textContent=tr().top;$("heroTitle").textContent=tr().hero;$("heroText").textContent=tr().desc;$("search").placeholder=tr().search;$("categoriesTitle").textContent=tr().cats;$("priceHint").textContent=tr().hint;$("productsTitle").textContent=tr().items;$("cartLabel").textContent=tr().cart;$("cartTitle").textContent=tr().cartTitle;$("totalLabel").textContent=tr().total;$("cartDisclaimer").textContent=tr().disclaimer;$("checkout").textContent=tr().checkout;render()}
+function categoryList(){let cats=["all","food","phones","accessories","other"];$("categories").innerHTML=cats.map(id=>`<button class="cat ${category===id?"active":""}" data-cat="${id}">${tr()[id]}</button>`).join("");document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{category=b.dataset.cat;render()})}
+function render(){categoryList();let q=$("search").value.trim().toLocaleLowerCase();let list=products.filter(p=>p.is_active&&(category==="all"||p.category===category)&&(!q||[p.name_ar,p.name_fr,p.name_en].filter(Boolean).join(" ").toLocaleLowerCase().includes(q)));$("productCount").textContent=list.length+" "+tr().count;$("products").innerHTML=list.length?list.map(p=>`<article class="product"><div class="prod-img">${p.image_url?`<img src="${escapeHtml(p.image_url)}" alt="${escapeHtml(p.name_ar)}" loading="lazy">`:"📦"}</div><div class="prod-body"><h4>${escapeHtml(nameOf(p)||"")}</h4><div class="prices">${p.unit_price?`<span>${tr().unit}: <b>${money(p.unit_price)}</b></span>`:""}${p.retail_price?`<span>${tr().retail}: <b>${money(p.retail_price)}</b></span>`:""}${p.wholesale_price?`<span>${tr().wholesale}: <b>${money(p.wholesale_price)}</b> (${tr().min}: ${p.wholesale_min_qty||1})</span>`:""}${!p.unit_price&&!p.retail_price&&!p.wholesale_price?`<b>${tr().noPrice}</b>`:""}</div><button class="add" data-add="${p.id}">${tr().add}</button></div></article>`).join(""):`<div class="empty">${tr().empty}</div>`;document.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{let id=b.dataset.add;cart[id]=(cart[id]||0)+1;updateCart()})}
+function escapeHtml(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function priceFor(p,q){if(p.wholesale_price&&q>=Number(p.wholesale_min_qty||999999))return Number(p.wholesale_price);return Number(p.retail_price||p.unit_price||p.wholesale_price||0)}
+function updateCart(){let entries=Object.entries(cart).filter(([,q])=>q>0);$("cartCount").textContent=entries.reduce((s,[,q])=>s+q,0);let total=0;$("cartItems").innerHTML=entries.length?entries.map(([id,q])=>{let p=products.find(x=>String(x.id)===String(id));if(!p)return "";let price=priceFor(p,q);total+=price*q;return `<div class="cartline"><div><strong>${escapeHtml(nameOf(p))}</strong><div class="small">${money(price)} × ${q}</div></div><div class="qty"><button data-dec="${id}">−</button><b>${q}</b><button data-inc="${id}">+</button></div></div>`}).join(""):`<div class="empty">${tr().emptyCart}</div>`;$("cartTotal").textContent=money(total);document.querySelectorAll("[data-inc]").forEach(b=>b.onclick=()=>{cart[b.dataset.inc]++;updateCart()});document.querySelectorAll("[data-dec]").forEach(b=>b.onclick=()=>{let id=b.dataset.dec;cart[id]--;if(cart[id]<=0)delete cart[id];updateCart()})}
+async function loadProducts(){setStatus(tr().load);const {data,error}=await db.from("products").select("*").eq("is_active",true).order("created_at",{ascending:false});if(error){console.error(error);$("connectionState").textContent=tr().offline;setStatus("تعذر تحميل المنتجات. تأكد من تنفيذ ملف إعداد Supabase وإتاحة مخطط public في إعدادات API. "+error.message,true);$("products").innerHTML='<div class="empty">لم نتمكن من تحميل المنتجات من قاعدة البيانات.</div>';return}products=data||[];$("connectionState").textContent=tr().connected;setStatus(tr().connected);render();if(isAdmin)renderAdminProducts()}
+function clearForm(){$("editId").value="";["pNameAr","pNameFr","pNameEn","pUnit","pRetail","pWholesale"].forEach(id=>$(id).value="");$("pCat").value="food";$("pMin").value="12";$("pImage").value=""}
+async function saveProduct(){let id=$("editId").value;let ar=$("pNameAr").value.trim();if(!ar){alert("أدخل اسم المنتج بالعربية");return}let payload={name_ar:ar,name_fr:$("pNameFr").value.trim()||null,name_en:$("pNameEn").value.trim()||null,category:$("pCat").value,unit_price:Number($("pUnit").value)||null,retail_price:Number($("pRetail").value)||null,wholesale_price:Number($("pWholesale").value)||null,wholesale_min_qty:Math.max(1,Number($("pMin").value)||12),is_active:true};let file=$("pImage").files[0];if(file){let safe=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");let path=Date.now()+"_"+safe;let up=await db.storage.from(IMAGE_BUCKET).upload(path,file,{upsert:false,contentType:file.type});if(up.error){$("adminMessage").textContent="تعذر رفع الصورة: "+up.error.message;return}payload.image_url=db.storage.from(IMAGE_BUCKET).getPublicUrl(path).data.publicUrl}
+let result=id?await db.from("products").update(payload).eq("id",id).select().single():await db.from("products").insert(payload).select().single();if(result.error){$("adminMessage").textContent="لم يتم الحفظ: "+result.error.message;return}$("adminMessage").textContent="تم حفظ المنتج في Supabase بنجاح.";clearForm();await loadProducts()}
+function renderAdminProducts(){$("adminProducts").innerHTML=products.map(p=>`<div class="admin-product"><div><strong>${escapeHtml(p.name_ar)}</strong><div class="small">${escapeHtml(p.category)} · ${money(p.retail_price||p.unit_price)}</div></div><div><button class="btn" data-edit="${p.id}">تعديل</button><button class="btn danger" data-delete="${p.id}">حذف</button></div></div>`).join("")||'<p class="small">لا توجد منتجات بعد.</p>';document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>{let p=products.find(x=>String(x.id)===b.dataset.edit);$("editId").value=p.id;$("pNameAr").value=p.name_ar||"";$("pNameFr").value=p.name_fr||"";$("pNameEn").value=p.name_en||"";$("pCat").value=p.category;$("pUnit").value=p.unit_price||"";$("pRetail").value=p.retail_price||"";$("pWholesale").value=p.wholesale_price||"";$("pMin").value=p.wholesale_min_qty||12;window.scrollTo({top:$("adminPanel").offsetTop,behavior:"smooth"})});document.querySelectorAll("[data-delete]").forEach(b=>b.onclick=async()=>{if(!confirm("هل تريد حذف هذا المنتج؟"))return;let {error}=await db.from("products").delete().eq("id",b.dataset.delete);if(error){$("adminMessage").textContent="تعذر الحذف: "+error.message;return}await loadProducts()})}
+async function checkSession(){const {data}=await db.auth.getSession();if(data.session){const {data:ok,error}=await db.rpc("is_store_admin");if(!error&&ok){isAdmin=true;$("loginArea").classList.add("hidden");$("adminArea").classList.remove("hidden");$("logoutBtn").style.display="inline-block";renderAdminProducts()}else{await db.auth.signOut();$("adminMessage").textContent="هذا الحساب ليس ضمن مديري المتجر. أضف حسابه إلى جدول store_admins في Supabase."}}}
+$("lang").onchange=e=>setLang(e.target.value);$("search").oninput=render;
+$("openCart").onclick=()=>{$("drawerBg").style.display="block";updateCart()};$("closeCart").onclick=()=>$("drawerBg").style.display="none";$("drawerBg").onclick=e=>{if(e.target===$("drawerBg"))$("drawerBg").style.display="none"};
+$("checkout").onclick=()=>{let entries=Object.entries(cart).filter(([,q])=>q>0);if(!entries.length)return;let lines=entries.map(([id,q])=>{let p=products.find(x=>String(x.id)===String(id)),price=priceFor(p,q);return `- ${nameOf(p)} | الكمية: ${q} | سعر الوحدة: ${money(price)} | المجموع: ${money(price*q)}`});let total=entries.reduce((s,[id,q])=>s+priceFor(products.find(x=>String(x.id)===String(id)),q)*q,0);let message=tr().sent+"\n\n"+lines.join("\n")+"\n\n"+tr().total+": "+money(total)+"\nالاسم:\nالعنوان/المنطقة:";window.open("https://wa.me/"+WA_NUMBER+"?text="+encodeURIComponent(message),"_blank")};
+$("adminToggle").onclick=()=>{$("adminPanel").style.display=$("adminPanel").style.display==="block"?"none":"block";$("adminPanel").scrollIntoView({behavior:"smooth",block:"center"})};
+$("loginBtn").onclick=async()=>{let {data,error}=await db.auth.signInWithPassword({email:$("adminEmail").value.trim(),password:$("adminPassword").value});if(error){$("adminMessage").textContent="تعذر تسجيل الدخول: "+error.message;return}let {data:ok,error:rpcErr}=await db.rpc("is_store_admin");if(rpcErr||!ok){await db.auth.signOut();$("adminMessage").textContent="تم التحقق من الحساب لكنه غير مسجل كمدير. نفّذ خطوة إضافة المدير في ملف SQL.";return}isAdmin=true;$("loginArea").classList.add("hidden");$("adminArea").classList.remove("hidden");$("logoutBtn").style.display="inline-block";$("adminMessage").textContent="تم تسجيل الدخول بنجاح.";renderAdminProducts()};
+$("logoutBtn").onclick=async()=>{await db.auth.signOut();isAdmin=false;$("adminArea").classList.add("hidden");$("loginArea").classList.remove("hidden");$("logoutBtn").style.display="none";$("adminMessage").textContent="تم تسجيل الخروج."};
+$("saveProduct").onclick=saveProduct;$("clearForm").onclick=clearForm;
+db.auth.onAuthStateChange(()=>{});
+setLang("ar");updateCart();loadProducts().then(checkSession);
 </script>
-</body>
-</html>
+</body></html>
